@@ -8,7 +8,7 @@ mb_http_output('UTF-8');
 
 // Заголовки с правильной кодировкой
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: https://stolitsa-dance.ru');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 

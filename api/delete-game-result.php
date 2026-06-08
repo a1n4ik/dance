@@ -1,6 +1,7 @@
 <?php
 session_start();
-require_once '../../config/database.php';
+header('Content-Type: application/json; charset=utf-8');
+require_once '../config/database.php';
 
 if (!isset($_SESSION['admin_id'])) {
     http_response_code(401);
@@ -9,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-$id = (int) $input['id'];
+$id = isset($input['id']) ? (int) $input['id'] : 0;
 
 if ($id <= 0) {
     http_response_code(400);
