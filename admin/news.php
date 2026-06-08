@@ -1,6 +1,5 @@
-
-// ========== admin/news.php ==========
 <?php
+// ========== admin/news.php ==========
 session_start();
 require_once '../config/database.php';
 
