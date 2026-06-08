@@ -1,0 +1,630 @@
+<?php
+session_start();
+require_once '../config/database.php';
+
+if (!isset($_SESSION['admin_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$error = '';
+$success = '';
+
+// Обработка действий
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'add_schedule':
+                $branch = $_POST['branch'];
+                $class_type = $_POST['class_type'];
+                $day_of_week = $_POST['day_of_week'];
+                $start_time = $_POST['start_time'];
+                $class_name = $_POST['class_name'];
+                $teacher = $_POST['teacher'];
+                $status = $_POST['status'];
+                
+                try {
+                    $stmt = $pdo->prepare("INSERT INTO schedule (branch, class_type, day_of_week, start_time, class_name, teacher, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$branch, $class_type, $day_of_week, $start_time, $class_name, $teacher, $status]);
+                    $success = "Занятие успешно добавлено в расписание!";
+                } catch (Exception $e) {
+                    $error = "Ошибка при добавлении: " . $e->getMessage();
+                }
+                break;
+                
+            case 'update_schedule':
+                $id = $_POST['id'];
+                $branch = $_POST['branch'];
+                $class_type = $_POST['class_type'];
+                $day_of_week = $_POST['day_of_week'];
+                $start_time = $_POST['start_time'];
+                $class_name = $_POST['class_name'];
+                $teacher = $_POST['teacher'];
+                $status = $_POST['status'];
+                
+                try {
+                    $stmt = $pdo->prepare("UPDATE schedule SET branch = ?, class_type = ?, day_of_week = ?, start_time = ?, class_name = ?, teacher = ?, status = ? WHERE id = ?");
+                    $stmt->execute([$branch, $class_type, $day_of_week, $start_time, $class_name, $teacher, $status, $id]);
+                    $success = "Расписание успешно обновлено!";
+                } catch (Exception $e) {
+                    $error = "Ошибка при обновлении: " . $e->getMessage();
+                }
+                break;
+                
+            case 'delete_schedule':
+                $id = $_POST['id'];
+                try {
+                    $stmt = $pdo->prepare("DELETE FROM schedule WHERE id = ?");
+                    $stmt->execute([$id]);
+                    $success = "Занятие удалено из расписания!";
+                } catch (Exception $e) {
+                    $error = "Ошибка при удалении: " . $e->getMessage();
+                }
+                break;
+                
+            case 'export_schedule':
+                // Экспорт расписания в JS файл
+                $schedule_data = [];
+                $stmt = $pdo->query("SELECT * FROM schedule WHERE status = 'active' ORDER BY branch, class_type, day_of_week, start_time");
+                $all_schedule = $stmt->fetchAll();
+                
+                foreach ($all_schedule as $item) {
+                    $branch_key = $item['branch'];
+                    $class_key = $item['class_type'];
+                    
+                    if (!isset($schedule_data[$branch_key])) {
+                        $schedule_data[$branch_key] = [];
+                    }
+                    if (!isset($schedule_data[$branch_key][$class_key])) {
+                        $schedule_data[$branch_key][$class_key] = [];
+                    }
+                    
+                    $schedule_data[$branch_key][$class_key][] = [
+                        'day' => $item['day_of_week'],
+                        'time' => $item['start_time'],
+                        'name' => $item['class_name'],
+                        'teacher' => $item['teacher']
+                    ];
+                }
+                
+                // Создаем JS файл
+                $js_content = "// ========== assets/js/schedule.js - Расписание (Автоматически сгенерировано) ========== \n";
+                $js_content .= "// Последнее обновление: " . date('Y-m-d H:i:s') . "\n\n";
+                $js_content .= "const scheduleData = " . json_encode($schedule_data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . ";\n\n";
+                
+                // Добавляем остальной код JS (функции)
+                $js_content .= file_get_contents('../assets/js/schedule.js');
+                
+                // Сохраняем файл
+                file_put_contents('../assets/js/schedule.js', $js_content);
+                $success = "Расписание экспортировано в JS файл!";
+                break;
+        }
+    }
+}
+
+// Получение расписания с фильтрами
+$filter_branch = $_GET['branch'] ?? '';
+$filter_class = $_GET['class_type'] ?? '';
+
+$query = "SELECT * FROM schedule WHERE 1=1";
+$params = [];
+
+if ($filter_branch) {
+    $query .= " AND branch = ?";
+    $params[] = $filter_branch;
+}
+
+if ($filter_class) {
+    $query .= " AND class_type = ?";
+    $params[] = $filter_class;
+}
+
+$query .= " ORDER BY branch, class_type, FIELD(day_of_week, 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'), start_time";
+
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
+$schedule_items = $stmt->fetchAll();
+
+// Для редактирования
+$edit_item = null;
+if (isset($_GET['edit'])) {
+    $stmt = $pdo->prepare("SELECT * FROM schedule WHERE id = ?");
+    $stmt->execute([$_GET['edit']]);
+    $edit_item = $stmt->fetch();
+}
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление расписанием - Админ-панель</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 80px;
+            width: 250px;
+            height: calc(100vh - 80px);
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            padding: 2rem 0;
+        }
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 1rem 2rem;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: #667eea;
+            color: white;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            max-width: calc(100vw - 250px);
+        }
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .content-header h2 {
+            color: #333;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        
+        .filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .schedule-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .schedule-table {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+            color: #666;
+            font-weight: 600;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: top;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .actions-column {
+            white-space: nowrap;
+        }
+        .actions-column .btn {
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>📅 Управление расписанием</h1>
+            <div>
+                <a href="dashboard.php" style="color: white;">← Назад</a> | 
+                Привет, <?= htmlspecialchars($_SESSION['admin_username']) ?> | 
+                <a href="logout.php" style="color: white;">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="dashboard.php">📊 Главная</a></li>
+            <li><a href="news.php">📰 Новости</a></li>
+            <li><a href="projects.php">🎪 Проекты</a></li>
+            <li><a href="reviews.php">⭐ Отзывы</a></li>
+            <li><a href="schedule.php" class="active">📅 Расписание</a></li>
+            <li><a href="applications.php">📝 Заявки</a></li>
+            <li><a href="settings.php">⚙️ Настройки</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h2><?= $edit_item ? 'Редактирование занятия' : 'Управление расписанием' ?></h2>
+            <div>
+                <form method="POST" style="display: inline;">
+                    <input type="hidden" name="action" value="export_schedule">
+                    <button type="submit" class="btn btn-warning">📤 Экспорт в JS</button>
+                </form>
+                <?php if ($edit_item): ?>
+                    <a href="schedule.php" class="btn">❌ Отменить редактирование</a>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if ($success): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+        <?php endif; ?>
+
+        <?php if ($error): ?>
+            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+
+        <!-- Статистика -->
+        <div class="stats-row">
+            <?php
+            $total_classes = $pdo->query("SELECT COUNT(*) FROM schedule")->fetchColumn();
+            $active_classes = $pdo->query("SELECT COUNT(*) FROM schedule WHERE status = 'active'")->fetchColumn();
+            $branches_count = $pdo->query("SELECT COUNT(DISTINCT branch) FROM schedule")->fetchColumn();
+            $class_types_count = $pdo->query("SELECT COUNT(DISTINCT class_type) FROM schedule")->fetchColumn();
+            ?>
+            <div class="stat-card">
+                <div class="stat-number"><?= $total_classes ?></div>
+                <div class="stat-label">Всего занятий</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $active_classes ?></div>
+                <div class="stat-label">Активных занятий</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $branches_count ?></div>
+                <div class="stat-label">Филиалов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $class_types_count ?></div>
+                <div class="stat-label">Типов занятий</div>
+            </div>
+        </div>
+
+        <!-- Форма добавления/редактирования -->
+        <div class="schedule-form">
+            <h3><?= $edit_item ? 'Редактировать занятие' : 'Добавить новое занятие' ?></h3>
+            <form method="POST">
+                <input type="hidden" name="action" value="<?= $edit_item ? 'update_schedule' : 'add_schedule' ?>">
+                <?php if ($edit_item): ?>
+                    <input type="hidden" name="id" value="<?= $edit_item['id'] ?>">
+                <?php endif; ?>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="branch">Филиал</label>
+                        <select id="branch" name="branch" required>
+                            <option value="">Выберите филиал</option>
+                            <option value="lomonosovsky" <?= ($edit_item && $edit_item['branch'] == 'lomonosovsky') ? 'selected' : '' ?>>м. Ломоносовский пр.</option>
+                            <option value="belorusskaya" <?= ($edit_item && $edit_item['branch'] == 'belorusskaya') ? 'selected' : '' ?>>м. Белорусская</option>
+                            <option value="1905" <?= ($edit_item && $edit_item['branch'] == '1905') ? 'selected' : '' ?>>м. 1905 года</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="class_type">Тип занятия</label>
+                        <select id="class_type" name="class_type" required>
+                            <option value="">Выберите тип</option>
+                            <option value="classic" <?= ($edit_item && $edit_item['class_type'] == 'classic') ? 'selected' : '' ?>>Классический танец</option>
+                            <option value="folk" <?= ($edit_item && $edit_item['class_type'] == 'folk') ? 'selected' : '' ?>>Народный танец</option>
+                            <option value="modern" <?= ($edit_item && $edit_item['class_type'] == 'modern') ? 'selected' : '' ?>>Современный танец</option>
+                            <option value="kids" <?= ($edit_item && $edit_item['class_type'] == 'kids') ? 'selected' : '' ?>>Детская хореография</option>
+                            <option value="individual" <?= ($edit_item && $edit_item['class_type'] == 'individual') ? 'selected' : '' ?>>Индивидуальные занятия</option>
+                            <option value="body" <?= ($edit_item && $edit_item['class_type'] == 'body') ? 'selected' : '' ?>>Боди-балет</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="day_of_week">День недели</label>
+                        <select id="day_of_week" name="day_of_week" required>
+                            <option value="">Выберите день</option>
+                            <option value="Понедельник" <?= ($edit_item && $edit_item['day_of_week'] == 'Понедельник') ? 'selected' : '' ?>>Понедельник</option>
+                            <option value="Вторник" <?= ($edit_item && $edit_item['day_of_week'] == 'Вторник') ? 'selected' : '' ?>>Вторник</option>
+                            <option value="Среда" <?= ($edit_item && $edit_item['day_of_week'] == 'Среда') ? 'selected' : '' ?>>Среда</option>
+                            <option value="Четверг" <?= ($edit_item && $edit_item['day_of_week'] == 'Четверг') ? 'selected' : '' ?>>Четверг</option>
+                            <option value="Пятница" <?= ($edit_item && $edit_item['day_of_week'] == 'Пятница') ? 'selected' : '' ?>>Пятница</option>
+                            <option value="Суббота" <?= ($edit_item && $edit_item['day_of_week'] == 'Суббота') ? 'selected' : '' ?>>Суббота</option>
+                            <option value="Воскресенье" <?= ($edit_item && $edit_item['day_of_week'] == 'Воскресенье') ? 'selected' : '' ?>>Воскресенье</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="start_time">Время начала</label>
+                        <input type="time" id="start_time" name="start_time" 
+                               value="<?= $edit_item ? htmlspecialchars($edit_item['start_time']) : '' ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="class_name">Название группы</label>
+                        <input type="text" id="class_name" name="class_name" 
+                               value="<?= $edit_item ? htmlspecialchars($edit_item['class_name']) : '' ?>" 
+                               placeholder="Например: 6-8 лет Классический танец" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="teacher">Преподаватель</label>
+                        <input type="text" id="teacher" name="teacher" 
+                               value="<?= $edit_item ? htmlspecialchars($edit_item['teacher']) : '' ?>" 
+                               placeholder="Например: Журавлёва О.А." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Статус</label>
+                        <select id="status" name="status" required>
+                            <option value="active" <?= ($edit_item && $edit_item['status'] == 'active') ? 'selected' : '' ?>>Активное</option>
+                            <option value="inactive" <?= ($edit_item && $edit_item['status'] == 'inactive') ? 'selected' : '' ?>>Неактивное</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn">
+                    <?= $edit_item ? '✏️ Обновить занятие' : '➕ Добавить занятие' ?>
+                </button>
+            </form>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="filters">
+            <form method="GET">
+                <div class="filters-row">
+                    <div class="form-group">
+                        <label for="filter_branch">Филиал</label>
+                        <select id="filter_branch" name="branch">
+                            <option value="">Все филиалы</option>
+                            <option value="lomonosovsky" <?= $filter_branch == 'lomonosovsky' ? 'selected' : '' ?>>м. Ломоносовский пр.</option>
+                            <option value="belorusskaya" <?= $filter_branch == 'belorusskaya' ? 'selected' : '' ?>>м. Белорусская</option>
+                            <option value="1905" <?= $filter_branch == '1905' ? 'selected' : '' ?>>м. 1905 года</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filter_class_type">Тип занятия</label>
+                        <select id="filter_class_type" name="class_type">
+                            <option value="">Все типы</option>
+                            <option value="classic" <?= $filter_class == 'classic' ? 'selected' : '' ?>>Классический танец</option>
+                            <option value="folk" <?= $filter_class == 'folk' ? 'selected' : '' ?>>Народный танец</option>
+                            <option value="modern" <?= $filter_class == 'modern' ? 'selected' : '' ?>>Современный танец</option>
+                            <option value="kids" <?= $filter_class == 'kids' ? 'selected' : '' ?>>Детская хореография</option>
+                            <option value="individual" <?= $filter_class == 'individual' ? 'selected' : '' ?>>Индивидуальные</option>
+                            <option value="body" <?= $filter_class == 'body' ? 'selected' : '' ?>>Боди-балет</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn">🔍 Фильтровать</button>
+                        <a href="schedule.php" class="btn btn-warning">🔄 Сбросить</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Таблица расписания -->
+        <div class="schedule-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Филиал</th>
+                        <th>Тип</th>
+                        <th>День</th>
+                        <th>Время</th>
+                        <th>Название группы</th>
+                        <th>Преподаватель</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($schedule_items)): ?>
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 3rem; color: #666;">
+                                Расписание пусто. Добавьте первое занятие.
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($schedule_items as $item): ?>
+                            <tr>
+                                <td>
+                                    <?php
+                                    $branch_names = [
+                                        'lomonosovsky' => 'м. Ломоносовский пр.',
+                                        'belorusskaya' => 'м. Белорусская',
+                                        '1905' => 'м. 1905 года'
+                                    ];
+                                    echo $branch_names[$item['branch']] ?? $item['branch'];
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    $class_names = [
+                                        'classic' => 'Классический',
+                                        'folk' => 'Народный',
+                                        'modern' => 'Современный',
+                                        'kids' => 'Детская хор.',
+                                        'individual' => 'Индивидуальные',
+                                        'body' => 'Боди-балет'
+                                    ];
+                                    echo $class_names[$item['class_type']] ?? $item['class_type'];
+                                    ?>
+                                </td>
+                                <td><?= htmlspecialchars($item['day_of_week']) ?></td>
+                                <td><strong><?= htmlspecialchars($item['start_time']) ?></strong></td>
+                                <td><?= htmlspecialchars($item['class_name']) ?></td>
+                                <td><?= htmlspecialchars($item['teacher']) ?></td>
+                                <td>
+                                    <span class="badge <?= $item['status'] == 'active' ? 'badge-success' : 'badge-warning' ?>">
+                                        <?= $item['status'] == 'active' ? 'Активное' : 'Неактивное' ?>
+                                    </span>
+                                </td>
+                                <td class="actions-column">
+                                    <a href="schedule.php?edit=<?= $item['id'] ?>" class="btn btn-small">✏️ Изменить</a>
+                                    <form method="POST" style="display: inline;" 
+                                          onsubmit="return confirm('Удалить это занятие из расписания?')">
+                                        <input type="hidden" name="action" value="delete_schedule">
+                                        <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                        <button type="submit" class="btn btn-small btn-danger">🗑️ Удалить</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
