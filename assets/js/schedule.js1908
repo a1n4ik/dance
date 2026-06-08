@@ -1,0 +1,470 @@
+// ========== assets/js/schedule.js - Обновленное расписание с загрузкой из БД ========== 
+
+// Глобальные переменные
+let scheduleData = {};
+let selectedMetro = 'lomonosovsky';
+let selectedClass = 'folk';
+let isLoading = false;
+
+// Маппинг ключей филиалов для совместимости
+const branchMapping = {
+    'lomonosovsky': 'lomonosovsky',
+    'belorusskaya': 'belorusskaya', 
+    '1905': '1905'
+};
+// Маппинг типов занятий
+const classTypeMapping = {
+    'classic': 'classic',
+    'folk': 'folk', 
+    'modern': 'modern',
+    'kids': 'kids',
+    'individual': 'individual',
+    'body': 'body'
+};
+
+// Фолбэк данные на случай если API недоступен
+const fallbackScheduleData = {
+    'lomonosovsky': {
+        'classic': [],
+        'folk': [
+            { day: 'Вторник', time: '16:00', name: '6-8 лет Народный танец', teacher: 'Журавлёв В.В.' },
+            { day: 'Вторник', time: '17:00', name: '8-10 лет Народный танец', teacher: 'Журавлёв В.В.' },
+            { day: 'Вторник', time: '18:00', name: '10-13 лет Народный танец', teacher: 'Журавлёв В.В.' }
+        ],
+        'modern': [],
+        'individual': [],
+        'kids': [],
+        'body': []
+    },
+    'belorusskaya': {
+        'individual': [],
+        'classic': [],
+        'folk': [],
+        'modern': [],
+        'kids': []
+    }
+};
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Schedule module loading...');
+    
+    // Загружаем расписание из БД
+    loadScheduleFromDB().then(() => {
+        initializeSchedule();
+    }).catch(error => {
+        console.error('Failed to load schedule from DB, using fallback data:', error);
+        scheduleData = fallbackScheduleData;
+        initializeSchedule();
+    });
+});
+
+// Загрузка расписания с сервера
+async function loadScheduleFromDB() {
+    console.log('Loading schedule from database...');
+    isLoading = true;
+    
+    try {
+        const response = await fetch('/api/schedule_debug.php', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            scheduleData = result.data;
+            console.log('Schedule loaded successfully:', scheduleData);
+            
+            // Показываем уведомление о количестве загруженных занятий
+            if (result.total_classes > 0) {
+                console.log(`Loaded ${result.total_classes} classes from database`);
+            }
+        } else {
+            throw new Error(result.message || 'Failed to load schedule data');
+        }
+        
+    } catch (error) {
+        console.error('Error loading schedule:', error);
+        throw error;
+    } finally {
+        isLoading = false;
+    }
+}
+
+// Инициализация интерфейса расписания
+function initializeSchedule() {
+    console.log('Initializing schedule interface...');
+    
+    // Добавляем обработчики событий для кнопок филиалов
+    const metroButtons = document.querySelectorAll('[data-metro]');
+    metroButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const metro = this.getAttribute('data-metro');
+            if (metro && branchMapping[metro]) {
+                selectMetro(metro);
+            }
+        });
+    });
+    
+    // Добавляем обработчики для кнопок типов занятий
+    const classButtons = document.querySelectorAll('[data-class]');
+    classButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const classType = this.getAttribute('data-class');
+            if (classType && classTypeMapping[classType]) {
+                selectClass(classType);
+            }
+        });
+    });
+    
+    // Устанавливаем начальные значения
+    if (scheduleData && Object.keys(scheduleData).length > 0) {
+        // Выбираем первый доступный филиал
+        const availableBranches = Object.keys(scheduleData);
+        if (availableBranches.length > 0) {
+            selectedMetro = availableBranches[0];
+            
+            // Выбираем первый доступный тип занятий для этого филиала
+            const branchData = scheduleData[selectedMetro];
+            const availableClasses = Object.keys(branchData).filter(classType => 
+                branchData[classType] && branchData[classType].length > 0
+            );
+            
+            if (availableClasses.length > 0) {
+                selectedClass = availableClasses[0];
+            }
+        }
+        
+        updateAvailableClasses();
+    }
+    
+    console.log('Schedule interface initialized');
+}
+// Установка начального выбора
+function setInitialSelection() {
+    // Находим первый доступный филиал
+    const availableBranches = Object.keys(scheduleData);
+    if (availableBranches.length > 0) {
+        selectedMetro = availableBranches[0];
+        
+        // Находим первый доступный тип занятий для выбранного филиала
+        const branchData = scheduleData[selectedMetro];
+        if (branchData) {
+            const availableTypes = Object.keys(branchData);
+            if (availableTypes.length > 0) {
+                selectedClass = availableTypes[0];
+            }
+        }
+    }
+    
+    // Обновляем визуальное состояние кнопок
+    updateButtonStates();
+    
+    // Показываем расписание
+    showSchedule();
+}
+
+// Выбор филиала
+function selectMetro(metro) {
+    console.log('Selected metro:', metro);
+    selectedMetro = metro;
+    
+    // Обновляем активные кнопки филиалов
+    document.querySelectorAll('.metro-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-metro') === metro) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Показываем селектор типов занятий
+    const classTypeSelector = document.getElementById('classTypeSelector');
+    if (classTypeSelector) {
+        classTypeSelector.style.display = 'block';
+    }
+    
+    // Обновляем доступные типы занятий для выбранного филиала
+    updateAvailableClasses();
+    
+    // Если тип занятий уже выбран, показываем расписание
+    if (selectedClass && scheduleData[selectedMetro] && scheduleData[selectedMetro][selectedClass]) {
+        showSchedule();
+    }
+}
+function updateAvailableClasses() {
+    const classButtons = document.querySelectorAll('.class-btn');
+    const metroData = scheduleData[selectedMetro];
+    
+    classButtons.forEach(button => {
+        const classType = button.getAttribute('data-class');
+        const hasClasses = metroData && metroData[classType] && metroData[classType].length > 0;
+        
+        if (hasClasses) {
+            button.disabled = false;
+            button.style.opacity = '1';
+        } else {
+            button.disabled = true;
+            button.style.opacity = '0.5';
+        }
+    });
+}
+// Выбор типа занятий
+function selectClass(classType) {
+    console.log('Selected class:', classType);
+    selectedClass = classType;
+    
+    // Обновляем активные кнопки типов занятий
+    document.querySelectorAll('.class-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-class') === classType) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Показываем расписание
+    showSchedule();
+}
+
+
+// Обновление состояния кнопок
+function updateButtonStates() {
+    // Обновляем кнопки филиалов
+    const metroButtons = document.querySelectorAll('[data-metro]');
+    metroButtons.forEach(button => {
+        const metro = button.getAttribute('data-metro');
+        if (metro === selectedMetro || branchMapping[metro] === selectedMetro) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+    
+    // Обновляем кнопки типов занятий
+    const classButtons = document.querySelectorAll('[data-class]');
+    classButtons.forEach(button => {
+        const classType = button.getAttribute('data-class');
+        if (classType === selectedClass || classTypeMapping[classType] === selectedClass) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+        
+        // Показываем/скрываем кнопки в зависимости от доступности
+        const branchData = scheduleData[selectedMetro];
+        if (branchData && branchData[classTypeMapping[classType] || classType]) {
+            button.style.display = '';
+            button.disabled = false;
+        } else {
+            // Не скрываем, но делаем неактивными
+            button.disabled = true;
+            button.style.opacity = '0.5';
+        }
+    });
+}
+
+// Отображение расписания
+function showSchedule() {
+    console.log('Showing schedule for:', selectedMetro, selectedClass);
+    
+    const wrapper = document.getElementById('scheduleTableWrapper');
+    const table = document.getElementById('scheduleTable');
+    
+    if (!wrapper || !table) {
+        console.error('Schedule table elements not found');
+        return;
+    }
+    
+    // Показываем индикатор загрузки
+    if (isLoading) {
+        table.innerHTML = `
+            <thead>
+                <tr><th style="text-align: center; padding: 2rem;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <div style="width: 20px; height: 20px; border: 2px solid #ddd; border-top: 2px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        Загрузка расписания...
+                    </div>
+                </th></tr>
+            </thead>
+        `;
+        wrapper.classList.add('show');
+        return;
+    }
+    
+    // Получаем данные расписания
+    const metroData = scheduleData[selectedMetro];
+    if (!metroData || !metroData[selectedClass] || metroData[selectedClass].length === 0) {
+        table.innerHTML = `
+            <thead>
+                <tr><th style="text-align: center; padding: 3rem; font-size: 1.2rem;">
+                    ${metroData ? 'Расписание для выбранного направления временно недоступно.' : 'Расписание для выбранного филиала недоступно.'}<br>
+                    <span style="font-size: 1rem; opacity: 0.7; font-weight: normal;">
+                        Свяжитесь с нами для уточнения времени занятий: +7-999-930-36-60
+                    </span>
+                    <br><br>
+                    <button onclick="loadScheduleFromDB().then(() => showSchedule())" 
+                            style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                        Обновить расписание
+                    </button>
+                </th></tr>
+            </thead>
+        `;
+        wrapper.classList.add('show');
+        return;
+    }
+    
+    const classData = metroData[selectedClass];
+    
+    // Группируем по дням
+    const byDay = {
+        'Понедельник': [],
+        'Вторник': [],
+        'Среда': [],
+        'Четверг': [],
+        'Пятница': [],
+'Суббота': [],
+    };
+    
+    classData.forEach(item => {
+        if (byDay[item.day]) {
+            byDay[item.day].push(item);
+        }
+    });
+    
+    // Создаем HTML таблицы
+    let html = `
+        <thead>
+            <tr>
+                <th>Время</th>
+                <th>Понедельник</th>
+                <th>Вторник</th>
+                <th>Среда</th>
+                <th>Четверг</th>
+                <th>Пятница</th>
+<th>Суббота</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    // Получаем все уникальные времена и сортируем
+    const allTimes = [...new Set(classData.map(item => item.time))].sort();
+    
+    if (allTimes.length === 0) {
+        html += `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem; opacity: 0.7;">
+                    Занятий на этой неделе нет
+                </td>
+            </tr>
+        `;
+    } else {
+        allTimes.forEach(time => {
+            html += '<tr>';
+            html += `<td class="time-slot">${time}</td>`;
+            
+            ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'].forEach(day => {
+                const dayClasses = byDay[day].filter(item => item.time === time);
+                html += '<td>';
+                dayClasses.forEach(cls => {
+                    html += `
+                        <div class="class-info">
+                            <span class="class-name">${cls.name}</span>
+                            <span class="teacher-name">${cls.teacher}</span>
+                        </div>
+                    `;
+                });
+                html += '</td>';
+            });
+            
+            html += '</tr>';
+        });
+    }
+    
+    html += '</tbody>';
+    
+    table.innerHTML = html;
+    wrapper.classList.add('show');
+    
+    // Плавная прокрутка к таблице
+
+}
+
+// Функция для обновления расписания (может быть вызвана из админ-панели)
+async function refreshSchedule() {
+    console.log('Refreshing schedule data...');
+    try {
+        await loadScheduleFromDB();
+        showSchedule();
+        console.log('Schedule refreshed successfully');
+    } catch (error) {
+        console.error('Failed to refresh schedule:', error);
+    }
+}
+
+// Экспорт функций для использования в других скриптах
+window.scheduleModule = {
+    loadScheduleFromDB,
+    refreshSchedule,
+    selectMetro,
+    selectClass,
+    showSchedule
+};
+
+// CSS анимация для индикатора загрузки
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .schedule-table .class-info {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(0, 123, 255, 0.1);
+        border-radius: 5px;
+        border-left: 3px solid #007bff;
+    }
+    
+    .schedule-table .class-name {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+    
+    .schedule-table .teacher-name {
+        display: block;
+        font-size: 0.9rem;
+        color: #666;
+        font-style: italic;
+    }
+    
+    .schedule-table .time-slot {
+        font-weight: 600;
+        color: #007bff;
+        background: rgba(0, 123, 255, 0.05);
+    }
+    
+    .schedule-table tbody tr:hover {
+        background: rgba(0, 123, 255, 0.02);
+    }
+    
+    .schedule-error-message {
+        color: #dc3545;
+        background: #f8d7da;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+    }
+`;
+document.head.appendChild(style);
+
+console.log('Schedule module loaded');

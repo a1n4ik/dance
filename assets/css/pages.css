@@ -1,0 +1,377 @@
+/* ========== assets/css/pages.css - Стили для внутренних страниц ========== */
+
+/* Page Hero */
+.page-hero {
+    margin-top: 80px;
+    padding: 5rem 0;
+    background: linear-gradient(135deg, var(--blue-medium) 0%, var(--pink-light) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.page-hero-folk {
+    background: linear-gradient(135deg, #FF5A98 0%, #FFB3D9 100%);
+}
+
+.page-hero-modern {
+    background: linear-gradient(135deg, #4FC3F7 0%, #B3E5FC 100%);
+}
+
+.page-hero-baby {
+    background: linear-gradient(135deg, #FFB3D9 0%, #FFC8E3 100%);
+}
+
+.page-hero-gymnastics {
+    background: linear-gradient(135deg, #29B6F6 0%, #4FC3F7 100%);
+}
+
+.page-hero-acrobatics {
+    background: linear-gradient(135deg, #FF7AB8 0%, #FF5A98 100%);
+}
+
+.page-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="300" fill="%23ffffff10"/><circle cx="200" cy="800" r="200" fill="%23ffffff08"/></svg>');
+    animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+.page-hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: white;
+}
+
+.page-title {
+    font-size: 4rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.page-subtitle {
+    font-size: 1.5rem;
+    opacity: 0.95;
+    font-weight: 300;
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+    padding: 2rem 0;
+    background: #f8f9fa;
+}
+
+.breadcrumbs-list {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    list-style: none;
+}
+
+.breadcrumbs-list a {
+    color: var(--blue-bright);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.breadcrumbs-list a:hover {
+    color: var(--pink-medium);
+}
+
+.breadcrumbs-list li:not(:last-child)::after {
+    content: '→';
+    margin-left: 1rem;
+    color: #999;
+}
+
+/* Content Section */
+.content-section {
+    padding: 5rem 0;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 4rem;
+    align-items: start;
+}
+
+.content-main h2 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    background: linear-gradient(45deg, var(--blue-bright), var(--pink-medium));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.content-main h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+    color: var(--blue-dark);
+}
+
+.content-main p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    color: #555;
+}
+
+.content-main ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 2rem;
+}
+
+.content-main ul li {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.content-main ul li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--pink-medium);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Dance Styles Grid */
+.dance-styles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin: 3rem 0;
+}
+
+.dance-style-card {
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(255, 179, 217, 0.1), rgba(255, 90, 152, 0.1));
+    border-radius: 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.dance-style-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 90, 152, 0.2);
+}
+
+.dance-style-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.dance-style-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--pink-dark);
+    margin-bottom: 0.5rem;
+}
+
+/* Sidebar */
+.content-sidebar {
+    position: sticky;
+    top: 100px;
+}
+
+.sidebar-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.sidebar-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--blue-dark);
+    text-transform: uppercase;
+}
+
+.price-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.price-item:last-child {
+    border-bottom: none;
+}
+
+.price-label {
+    font-size: 0.95rem;
+    color: #666;
+}
+
+.price-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--pink-medium);
+}
+
+.cta-button {
+    display: block;
+    width: 100%;
+    padding: 1.2rem;
+    background: linear-gradient(135deg, var(--blue-bright), var(--pink-medium));
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.3s ease;
+    margin-top: 1.5rem;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(79, 195, 247, 0.3);
+}
+
+/* Gallery Section */
+.gallery-section {
+    padding: 5rem 0;
+    background: #f8f9fa;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.gallery-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.gallery-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.1);
+}
+
+/* Teachers Section */
+.teachers-section {
+    padding: 5rem 0;
+}
+
+.teachers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 3rem;
+    margin-top: 3rem;
+}
+
+.teacher-card {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.teacher-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.teacher-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    overflow: hidden;
+    border: 5px solid var(--blue-light);
+}
+
+.teacher-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.teacher-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--blue-dark);
+}
+
+.teacher-title {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.teacher-bio {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #777;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2.5rem;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .content-sidebar {
+        position: static;
+    }
+
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dance-styles {
+        grid-template-columns: 1fr;
+    }
+}
+

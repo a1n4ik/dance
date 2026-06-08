@@ -1,0 +1,193 @@
+
+<!-- ========== assets/css/cookie-consent.css ========== -->
+<style>
+.cookie-consent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    z-index: 10000;
+    padding: 1rem;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.cookie-consent-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.cookie-consent-text h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    color: #FFB3D9;
+}
+
+.cookie-consent-text p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    opacity: 0.9;
+}
+
+.cookie-consent-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.cookie-consent .btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+}
+
+.btn-accept {
+    background: #03A9F4;
+    color: white;
+}
+
+.btn-accept:hover {
+    background: #0288D1;
+    transform: translateY(-2px);
+}
+
+.btn-decline {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-decline:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.cookie-policy-link {
+    color: #FFB3D9;
+    text-decoration: none;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.cookie-policy-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .cookie-consent-content {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+    }
+    
+    .cookie-consent-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+    
+    .cookie-consent .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .cookie-consent-text h3 {
+        font-size: 1.1rem;
+    }
+    
+    .cookie-consent-text p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cookie-consent {
+        padding: 1rem 0.5rem;
+    }
+    
+    .cookie-consent-buttons {
+        gap: 0.8rem;
+    }
+    
+    .cookie-consent .btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.85rem;
+    }
+}
+</style>
+
+<!-- ========== privacy.php - Страница политики конфиденциальности ========== -->
+<?php
+$page_title = "Политика конфиденциальности - Театр танца Столица";
+$page_description = "Политика обработки персональных данных и использования файлов cookie на сайте театра танца Столица";
+
+require_once 'includes/header.php';
+?>
+
+<section class="page-hero">
+    <div class="container">
+        <div class="page-hero-content">
+            <h1 class="page-title">Политика конфиденциальности</h1>
+            <p class="page-subtitle">Обработка персональных данных и использование cookie</p>
+        </div>
+    </div>
+</section>
+
+<section class="privacy-content">
+    <div class="container">
+        <div class="content-wrapper">
+            
+            <h2>Использование файлов cookie</h2>
+            <p>Наш сайт использует файлы cookie для:</p>
+            <ul>
+                <li>Анализа посещаемости сайта через Яндекс.Метрику</li>
+                <li>Улучшения пользовательского опыта</li>
+                <li>Запоминания ваших предпочтений</li>
+            </ul>
+
+            <h2>Яндекс.Метрика</h2>
+            <p>Мы используем сервис Яндекс.Метрика для сбора статистики посещений. Яндекс.Метрика использует файлы cookie для:</p>
+            <ul>
+                <li>Подсчета уникальных посетителей</li>
+                <li>Анализа поведения пользователей на сайте</li>
+                <li>Создания тепловых карт (при включенном вебвизоре)</li>
+            </ul>
+
+            <h2>Как отключить cookie</h2>
+            <p>Вы можете:</p>
+            <ul>
+                <li>Отклонить использование cookie при первом посещении</li>
+                <li>Отключить cookie в настройках браузера</li>
+                <li>Удалить уже установленные cookie</li>
+            </ul>
+
+            <h2>Контактная информация</h2>
+            <p>По вопросам обработки персональных данных обращайтесь:</p>
+            <p><strong>Email:</strong> info@stolitsa-dance.ru<br>
+            <strong>Телефон:</strong> +7 (999) 930-36-60</p>
+
+        </div>
+    </div>
+</section>
+
+<?php require_once 'includes/footer.php'; ?>
