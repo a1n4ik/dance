@@ -43,16 +43,36 @@
     }
 }
 
-@media (max-width: 768px) {
-    .header {
-        padding: 1rem;
-       
-    }
-    
+/* На планшетах (769–991px) полное десктоп-меню не помещается — показываем бургер */
+@media (max-width: 991px) {
     .nav-menu {
         display: none;
     }
-    
+
+    .menu-burger {
+        display: flex;
+        /* Выше оверлея (9999), чтобы «крестик» оставался виден и кликабелен */
+        position: relative;
+        z-index: 10000;
+    }
+}
+
+@media (min-width: 992px) {
+    .menu-burger {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem;
+
+    }
+
+    .nav-menu {
+        display: none;
+    }
+
     .menu-burger {
         display: flex;
     }

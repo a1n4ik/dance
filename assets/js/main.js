@@ -66,10 +66,19 @@ const submenuToggles = document.querySelectorAll('.submenu-toggle');
 
 if (menuBurger && mobileMenuOverlay) {
     // Открытие мобильного меню
-    menuBurger.addEventListener('click', () => {
+    function openMobileMenu() {
         mobileMenuOverlay.classList.add('active');
         menuBurger.classList.add('active');
         document.body.style.overflow = 'hidden';
+    }
+
+    // Клик по бургеру переключает меню (видимый «крестик» тоже закрывает)
+    menuBurger.addEventListener('click', () => {
+        if (mobileMenuOverlay.classList.contains('active')) {
+            closeMobileMenu();
+        } else {
+            openMobileMenu();
+        }
     });
 
     // Закрытие мобильного меню
@@ -577,18 +586,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: var(--blue-bright);
             }
             
-            @media (max-width: 768px) {
+            @media (max-width: 991px) {
                 .nav-menu {
                     display: none;
                 }
-                
+
                 .menu-burger {
                     display: flex;
                     flex-direction: column;
                     cursor: pointer;
                     padding: 0.5rem;
+                    /* Бургер всегда выше оверлея (9999), чтобы «крестик» был виден и кликабелен */
+                    position: relative;
+                    z-index: 10000;
                 }
-                
+
                 .menu-burger span {
                     width: 25px;
                     height: 3px;
@@ -596,21 +608,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     margin: 3px 0;
                     transition: 0.3s;
                 }
-                
+
                 .menu-burger.active span:nth-child(1) {
                     transform: rotate(-45deg) translate(-5px, 6px);
                 }
-                
+
                 .menu-burger.active span:nth-child(2) {
                     opacity: 0;
                 }
-                
+
                 .menu-burger.active span:nth-child(3) {
                     transform: rotate(45deg) translate(-5px, -6px);
                 }
             }
-            
-            @media (min-width: 769px) {
+
+            @media (min-width: 992px) {
                 .menu-burger {
                     display: none;
                 }
