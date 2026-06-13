@@ -152,87 +152,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ========== АДАПТИВНЫЕ СЛАЙДЕРЫ ==========
+    // Слайдеры новостей и проектов инициализируются ОДИН раз в sliders.js
+    // (без autoplay). Здесь инициализация удалена, чтобы не создавать дубли
+    // Swiper (это вызывало автопрокрутку и мерцание).
     function initResponsiveSliders() {
-        // Если используется Swiper
-        if (window.Swiper) {
-            // Новости слайдер
-            const newsSlider = document.querySelector('.news-slider');
-            if (newsSlider) {
-                new Swiper(newsSlider, {
-                    slidesPerView: 'auto',
-                    spaceBetween: 20,
-                    pagination: {
-                        el: '.swiper-pagination',
-                        clickable: true,
-                    },
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
-                    breakpoints: {
-                        320: {
-                            slidesPerView: 1.1,
-                            spaceBetween: 10,
-                        },
-                        480: {
-                            slidesPerView: 1.3,
-                            spaceBetween: 15,
-                        },
-                        768: {
-                            slidesPerView: 2,
-                            spaceBetween: 20,
-                        },
-                        1024: {
-                            slidesPerView: 3,
-                            spaceBetween: 30,
-                        },
-                        1200: {
-                            slidesPerView: 4,
-                            spaceBetween: 30,
-                        }
-                    }
-                });
-            }
-            
-            // Проекты слайдер
-            const projectsSlider = document.querySelector('.projects-slider');
-            if (projectsSlider) {
-                new Swiper(projectsSlider, {
-                    slidesPerView: 'auto',
-                    spaceBetween: 20,
-                    pagination: {
-                        el: '.swiper-pagination',
-                        clickable: true,
-                    },
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
-                    breakpoints: {
-                        320: {
-                            slidesPerView: 1.1,
-                            spaceBetween: 10,
-                        },
-                        480: {
-                            slidesPerView: 1.3,
-                            spaceBetween: 15,
-                        },
-                        768: {
-                            slidesPerView: 2,
-                            spaceBetween: 20,
-                        },
-                        1024: {
-                            slidesPerView: 3,
-                            spaceBetween: 30,
-                        },
-                        1200: {
-                            slidesPerView: 4,
-                            spaceBetween: 30,
-                        }
-                    }
-                });
-            }
-        }
+        /* no-op: см. sliders.js */
     }
     
     // ========== АДАПТИВНЫЙ HEADER ==========
