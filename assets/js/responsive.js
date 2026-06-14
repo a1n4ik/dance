@@ -3,53 +3,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // ========== МОБИЛЬНОЕ МЕНЮ ==========
+    // Логикой бургер-меню (открытие/закрытие, подменю «Направления») полностью
+    // управляет main.js. Здесь дублирующие обработчики удалены: они навешивали
+    // закрытие меню на ВСЕ ссылки, включая «Направления», из-за чего при раскрытии
+    // подменю всё меню закрывалось.
     function initMobileMenu() {
-        // Создаем мобильное меню если его нет
-        if (!document.querySelector('.mobile-menu-overlay')) {
-            createMobileMenu();
-        }
-        
-        const burger = document.querySelector('.menu-burger');
-        const overlay = document.querySelector('.mobile-menu-overlay');
-        const closeBtn = document.querySelector('.mobile-menu-close');
-        
-        if (burger && overlay) {
-            // Открытие меню
-            burger.addEventListener('click', function() {
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
-            
-            // Закрытие меню
-            if (closeBtn) {
-                closeBtn.addEventListener('click', closeMobileMenu);
-            }
-            
-            // Закрытие по клику на overlay
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) {
-                    closeMobileMenu();
-                }
-            });
-            
-            // Закрытие по Escape
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && overlay.classList.contains('active')) {
-                    closeMobileMenu();
-                }
-            });
-            
-            // Закрытие при клике на ссылку
-            const mobileLinks = overlay.querySelectorAll('.mobile-menu-list a');
-            mobileLinks.forEach(link => {
-                link.addEventListener('click', closeMobileMenu);
-            });
-        }
-        
-        function closeMobileMenu() {
-            overlay.classList.remove('active');
-            document.body.style.overflow = '';
-        }
+        /* no-op: см. main.js */
     }
     
     // Создание мобильного меню
@@ -198,16 +157,22 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(resizeTimer);
             
             resizeTimer = setTimeout(function() {
-                // Закрываем мобильное меню при изменении размера
-                const overlay = document.querySelector('.mobile-menu-overlay');
-                if (overlay && overlay.classList.contains('active')) {
-                    overlay.classList.remove('active');
-                    document.body.style.overflow = '';
+                // Закрываем мобильное меню только при переходе на десктоп (>=992px),
+                // а не на каждый resize — иначе на телефоне меню закрывалось само,
+                // т.к. адресная строка при скролле постоянно меняет высоту окна.
+                if (window.innerWidth >= 992) {
+                    const overlay = document.querySelector('.mobile-menu-overlay');
+                    const burger = document.querySelector('.menu-burger');
+                    if (overlay && overlay.classList.contains('active')) {
+                        overlay.classList.remove('active');
+                        if (burger) burger.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
                 }
-                
+
                 // Перерасчет высот для некоторых элементов
                 updateViewportHeights();
-                
+
             }, 250);
         });
     }
