@@ -1,5 +1,5 @@
-// ========== admin/projects.php - Управление проектами ========== 
 <?php
+// ========== admin/projects.php - Управление проектами ==========
 session_start();
 require_once '../config/database.php';
 

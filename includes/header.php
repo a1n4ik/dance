@@ -64,8 +64,8 @@ function isActive($page, $current) {
     <meta property="og:image" content="https://stolitsa-dance.ru/wp-content/uploads/2025/07/logo_new.png">
     <meta property="og:url" content="https://<?= $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ?>">
     
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://<?= $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ?>">
+    <!-- Canonical URL (без query-строки, чтобы избежать дублей для поисковика) -->
+    <link rel="canonical" href="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?'), ENT_QUOTES) ?>">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
@@ -74,7 +74,6 @@ function isActive($page, $current) {
     <!-- CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
     <link rel="stylesheet" href="/assets/css/main.css">
-	<link rel="stylesheet" href="/assets/css/home.css">
     <?php if (isset($additional_css)): ?>
         <?php foreach ($additional_css as $css_file): ?>
             <link rel="stylesheet" href="<?= htmlspecialchars($css_file) ?>">
@@ -222,6 +221,18 @@ function isActive($page, $current) {
     console.log('✅ Яндекс.Метрика активна');
 })();
 </script>
+
+<!-- JSON-LD микроразметка Schema.org -->
+<?php
+require_once __DIR__ . '/seo-meta.php';
+$seoManager = new SEOMetaManager();
+$seoMeta = [
+    'description' => $page_description ?? 'Профессиональное обучение танцам в Москве',
+];
+echo '<script type="application/ld+json">' . "\n";
+echo $seoManager->generateJsonLD($current_page, $seoMeta, $seo_additional_data ?? []);
+echo "\n" . '</script>';
+?>
 </head>
 <body>
     <!-- Header -->

@@ -55,32 +55,24 @@ try {
         'data' => $schedule_data,
         'total_classes' => $total_classes,
         'branches' => array_keys($schedule_data),
-        'timestamp' => date('Y-m-d H:i:s'),
-        'debug' => [
-            'items_from_db' => count($schedule_items),
-            'branches_count' => count($schedule_data),
-            'sql_executed' => 'SELECT * FROM schedule WHERE status = "active"'
-        ]
+        'timestamp' => date('Y-m-d H:i:s')
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    
+
 } catch (PDOException $e) {
     error_log('Schedule API Database Error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => 'Ошибка подключения к базе данных',
-        'message' => 'Не удается загрузить расписание',
-        'debug' => [
-            'pdo_error' => $e->getMessage()
-        ]
+        'message' => 'Не удается загрузить расписание'
     ], JSON_UNESCAPED_UNICODE);
-    
+
 } catch (Exception $e) {
     error_log('Schedule API General Error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => 'Ошибка сервера',
-        'message' => $e->getMessage()
+        'message' => 'Внутренняя ошибка сервера'
     ], JSON_UNESCAPED_UNICODE);
 }

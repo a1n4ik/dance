@@ -9,7 +9,7 @@ $page_description = "Новости театра танца Столица. По
 $page_keywords = "новости театр танца, события, конкурсы, фестивали, достижения, танцевальная школа москва";
 
 // Дополнительные CSS файлы
-$additional_css = ['/assets/css/news.css'];
+$additional_css = ['/assets/css/improved-news.css'];
 
 // Дополнительные JS файлы  
 $additional_js = ['/assets/js/improved-news.js'];

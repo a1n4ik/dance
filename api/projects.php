@@ -2,7 +2,7 @@
 // ========== api/projects.php - API для работы с проектами ==========
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: https://stolitsa-dance.ru');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -298,27 +298,34 @@ function createSlug($text) {
 
 // Функция для загрузки изображений
 function uploadImage($file, $subfolder = 'projects') {
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    // Белый список расширений и соответствующих им реальных типов изображений
+    $allowedExtensions = ['jpg' => IMAGETYPE_JPEG, 'jpeg' => IMAGETYPE_JPEG, 'png' => IMAGETYPE_PNG, 'webp' => IMAGETYPE_WEBP, 'gif' => IMAGETYPE_GIF];
     $maxSize = 5 * 1024 * 1024; // 5MB
-    
-    // Проверка типа файла
-    if (!in_array($file['type'], $allowedTypes)) {
-        return ['success' => false, 'error' => 'Недопустимый тип файла'];
-    }
-    
+
     // Проверка размера
     if ($file['size'] > $maxSize) {
         return ['success' => false, 'error' => 'Файл слишком большой'];
     }
-    
+
+    // Проверка расширения по белому списку (а не по клиентскому MIME, который легко подделать)
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!isset($allowedExtensions[$extension])) {
+        return ['success' => false, 'error' => 'Недопустимый тип файла'];
+    }
+
+    // Проверяем, что файл — действительно изображение, и что его реальный тип совпадает с расширением
+    $imageInfo = @getimagesize($file['tmp_name']);
+    if ($imageInfo === false || $imageInfo[2] !== $allowedExtensions[$extension]) {
+        return ['success' => false, 'error' => 'Файл не является корректным изображением'];
+    }
+
     // Создаем папку если не существует
     $uploadDir = "../uploads/$subfolder/";
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
-    
-    // Генерируем уникальное имя файла
-    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+
+    // Генерируем уникальное имя файла (расширение берём из проверенного белого списка)
     $filename = time() . '_' . uniqid() . '.' . $extension;
     $filepath = $uploadDir . $filename;
     

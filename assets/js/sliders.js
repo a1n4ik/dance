@@ -21,13 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeSliders() {
         // ========== НОВОСТИ СЛАЙДЕР ==========
         const newsSliderContainer = document.querySelector('.news-slider');
-        if (newsSliderContainer) {
+        if (newsSliderContainer && !newsSliderContainer.swiper) {
             // Проверяем что есть слайды
             const newsSlides = newsSliderContainer.querySelectorAll('.swiper-slide');
-            
+
             if (newsSlides.length > 0) {
                 try {
-                    const newsSwiper = new Swiper(newsSliderContainer, {
+                    window.newsSwiper = new Swiper(newsSliderContainer, {
                         // Основные настройки
                         slidesPerView: 'auto',
                         spaceBetween: 30,
@@ -47,28 +47,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         
                         // Адаптивность
+                        // slidesPerView: 'auto' — ширину слайдов задаёт CSS (фиксированные
+                        // 740px/600px/90vw). Числовые значения конфликтовали с !important-шириной
+                        // в CSS и приводили к «разъезжающейся» раскладке.
                         breakpoints: {
                             320: {
-                                slidesPerView: 1.1,
+                                slidesPerView: 'auto',
                                 spaceBetween: 15,
                                 centeredSlides: true,
                             },
-                            480: {
-                                slidesPerView: 1.3,
-                                spaceBetween: 20,
+                            768: {
+                                slidesPerView: 'auto',
+                                spaceBetween: 25,
                                 centeredSlides: false,
                             },
-                            768: {
-                                slidesPerView: 2,
-                                spaceBetween: 25,
-                            },
-                            1024: {
-                                slidesPerView: 3,
-                                spaceBetween: 30,
-                            },
                             1200: {
-                                slidesPerView: 4,
-                                spaceBetween: 30,
+                                slidesPerView: 'auto',
+                                spaceBetween: 40,
+                                centeredSlides: false,
                             }
                         },
                         
@@ -94,13 +90,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // ========== ПРОЕКТЫ СЛАЙДЕР ==========
         const projectsSliderContainer = document.querySelector('.projects-slider');
-        if (projectsSliderContainer) {
+        if (projectsSliderContainer && !projectsSliderContainer.swiper) {
             // Проверяем что есть слайды
             const projectSlides = projectsSliderContainer.querySelectorAll('.swiper-slide');
-            
+
             if (projectSlides.length > 0) {
                 try {
-                    const projectsSwiper = new Swiper(projectsSliderContainer, {
+                    window.projectsSwiper = new Swiper(projectsSliderContainer, {
                         // Основные настройки
                         slidesPerView: 'auto',
                         spaceBetween: 30,
@@ -120,28 +116,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         
                         // Адаптивность
+                        // slidesPerView: 'auto' — ширину слайдов задаёт CSS (фиксированные
+                        // 740px/600px/90vw). Числовые значения конфликтовали с !important-шириной
+                        // в CSS и приводили к «разъезжающейся» раскладке.
                         breakpoints: {
                             320: {
-                                slidesPerView: 1.1,
+                                slidesPerView: 'auto',
                                 spaceBetween: 15,
                                 centeredSlides: true,
                             },
-                            480: {
-                                slidesPerView: 1.3,
-                                spaceBetween: 20,
+                            768: {
+                                slidesPerView: 'auto',
+                                spaceBetween: 25,
                                 centeredSlides: false,
                             },
-                            768: {
-                                slidesPerView: 2,
-                                spaceBetween: 25,
-                            },
-                            1024: {
-                                slidesPerView: 3,
-                                spaceBetween: 30,
-                            },
                             1200: {
-                                slidesPerView: 4,
-                                spaceBetween: 30,
+                                slidesPerView: 'auto',
+                                spaceBetween: 40,
+                                centeredSlides: false,
                             }
                         },
                         
@@ -282,22 +274,18 @@ window.reinitializeSliders = function() {
     }, 500);
 };
 
-// Автоматическая переинициализация при ошибках
-window.addEventListener('error', function(e) {
-    if (e.message && e.message.includes('querySelectorAll')) {
-        console.warn('Обнаружена ошибка querySelectorAll, переинициализируем слайдеры');
-        setTimeout(window.reinitializeSliders, 1000);
-    }
-});
-
-// Переинициализация при изменении размера окна
+// При изменении размера окна Swiper пересчитывает раскладку сам — НЕ пересоздаём
+// слайдер (это вызывало мерцание и «прыжки», т.к. на мобильных адресная строка
+// постоянно меняет высоту и генерирует resize). Достаточно update().
 let resizeTimer;
 window.addEventListener('resize', function() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-        if (window.innerWidth <= 768) {
-            // На мобильных переинициализируем
-            window.reinitializeSliders();
+        if (window.newsSwiper && typeof window.newsSwiper.update === 'function') {
+            window.newsSwiper.update();
         }
-    }, 500);
+        if (window.projectsSwiper && typeof window.projectsSwiper.update === 'function') {
+            window.projectsSwiper.update();
+        }
+    }, 250);
 });

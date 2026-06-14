@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Служебные каталоги закрыты от индексации
+Disallow: /api/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /uploads/
+Disallow: /404.php
+
+# Не индексируем URL с query-параметрами (во избежание дублей)
+Disallow: /*?
+
+Sitemap: https://stolitsa-dance.ru/sitemap.php

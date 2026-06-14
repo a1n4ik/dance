@@ -352,26 +352,130 @@
     color: #777;
 }
 
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+    .content-grid {
+        gap: 2.5rem;
+    }
+
+    .page-hero {
+        padding: 4rem 0;
+    }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    .page-hero {
+        margin-top: 60px;
+        padding: 3rem 0;
+    }
+
     .page-title {
         font-size: 2.5rem;
     }
 
+    .page-subtitle {
+        font-size: 1.15rem;
+    }
+
+    /* Тяжёлая декоративная анимация отключается на мобильных для производительности */
+    .page-hero::before {
+        display: none;
+    }
+
+    .breadcrumbs {
+        padding: 1.25rem 0;
+    }
+
+    .breadcrumbs-list {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumbs-list li:not(:last-child)::after {
+        margin-left: 0.5rem;
+    }
+
+    .content-section,
+    .gallery-section,
+    .teachers-section {
+        padding: 3rem 0;
+    }
+
     .content-grid {
         grid-template-columns: 1fr;
+        gap: 2rem;
     }
 
     .content-sidebar {
         position: static;
     }
 
+    .content-main h2 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .content-main h3 {
+        font-size: 1.4rem;
+    }
+
+    .content-main p,
+    .content-main ul li {
+        font-size: 1rem;
+    }
+
     .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .gallery-item img {
+        height: 200px;
+    }
+
+    .teachers-grid {
         grid-template-columns: 1fr;
+        gap: 2rem;
     }
 
     .dance-styles {
         grid-template-columns: 1fr;
+    }
+
+    .sidebar-card {
+        padding: 1.5rem;
+    }
+}
+
+/* Small Mobile Responsive */
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+    }
+
+    .content-main h2 {
+        font-size: 1.6rem;
+    }
+
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gallery-item img {
+        height: 220px;
+    }
+
+    .cta-button {
+        padding: 1rem;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
     }
 }
 

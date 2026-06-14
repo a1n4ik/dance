@@ -1,5 +1,5 @@
-// ========== admin/applications.php - Управление заявками ========== 
 <?php
+// ========== admin/applications.php - Управление заявками ==========
 session_start();
 require_once '../config/database.php';
 

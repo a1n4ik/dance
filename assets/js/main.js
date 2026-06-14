@@ -1,61 +1,8 @@
 // ========== assets/js/main.js - Основной JavaScript ========== 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Swiper for news
-    if (document.querySelector('.news-slider')) {
-        const newsSwiper = new Swiper('.news-slider', {
-            slidesPerView: 1,
-            spaceBetween: 30,
-            loop: true,
-            autoplay: {
-                delay: 5000,
-                disableOnInteraction: false,
-            },
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-            breakpoints: {
-                640: {
-                    slidesPerView: 2,
-                },
-                1024: {
-                    slidesPerView: 3,
-                },
-                1400: {
-                    slidesPerView: 4,
-                },
-            },
-        });
-    }
-
-    // Initialize Swiper for projects
-    if (document.querySelector('.projects-slider')) {
-        const projectsSwiper = new Swiper('.projects-slider', {
-            slidesPerView: 1,
-            spaceBetween: 30,
-            loop: true,
-            autoplay: {
-                delay: 6000,
-                disableOnInteraction: false,
-            },
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            breakpoints: {
-                768: {
-                    slidesPerView: 2,
-                },
-                1024: {
-                    slidesPerView: 3,
-                },
-            },
-        });
-    }
+    // Слайдеры новостей и проектов инициализируются ОДИН раз в sliders.js
+    // (без autoplay). Здесь повторная инициализация удалена, чтобы не плодить
+    // дубли Swiper и не было автопрокрутки/мерцания.
 
     // Mobile menu toggle
     // Mobile menu toggle - ОБНОВЛЕННАЯ ВЕРСИЯ
@@ -66,10 +13,19 @@ const submenuToggles = document.querySelectorAll('.submenu-toggle');
 
 if (menuBurger && mobileMenuOverlay) {
     // Открытие мобильного меню
-    menuBurger.addEventListener('click', () => {
+    function openMobileMenu() {
         mobileMenuOverlay.classList.add('active');
         menuBurger.classList.add('active');
         document.body.style.overflow = 'hidden';
+    }
+
+    // Клик по бургеру переключает меню (видимый «крестик» тоже закрывает)
+    menuBurger.addEventListener('click', () => {
+        if (mobileMenuOverlay.classList.contains('active')) {
+            closeMobileMenu();
+        } else {
+            openMobileMenu();
+        }
     });
 
     // Закрытие мобильного меню
@@ -179,68 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
 
-    // Инициализация улучшенного слайдера новостей
-    const newsSwiper = new Swiper('.news-slider', {
-        slidesPerView: 'auto',
-        spaceBetween: 30,
-        freeMode: false,
-        grabCursor: true,
-        centeredSlides: false,
-        
-        // Показываем только 2 слайда, остальные за границей
-        slidesOffsetBefore: 0,
-        slidesOffsetAfter: 50,
-        
-        navigation: {
-            nextEl: '.news-section .swiper-button-next',
-            prevEl: '.news-section .swiper-button-prev',
-        },
-        
-        pagination: {
-            el: '.news-section .swiper-pagination',
-            clickable: true,
-            dynamicBullets: true,
-        },
-        
-        autoplay: {
-            delay: 5000,
-            disableOnInteraction: false,
-            pauseOnMouseEnter: true,
-        },
-        
-        breakpoints: {
-            320: {
-                spaceBetween: 20,
-                slidesOffsetBefore: 20,
-            },
-            768: {
-                spaceBetween: 25,
-                slidesOffsetBefore: 30,
-            },
-            1024: {
-                spaceBetween: 30,
-                slidesOffsetBefore: 0,
-            }
-        },
-        
-        on: {
-            init: function() {
-                console.log('News slider initialized');
-                // Анимация появления карточек
-                setTimeout(() => {
-                    this.slides.forEach((slide, index) => {
-                        slide.style.opacity = '0';
-                        slide.style.transform = 'translateY(50px)';
-                        setTimeout(() => {
-                            slide.style.transition = 'all 0.6s ease';
-                            slide.style.opacity = '1';
-                            slide.style.transform = 'translateY(0)';
-                        }, index * 100);
-                    });
-                }, 100);
-            }
-        }
-    });
+    // (Слайдер новостей инициализируется в sliders.js — без autoplay.
+    // Повторная инициализация здесь удалена.)
 
     
     // Глобальные функции для модальных окон
@@ -577,18 +473,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: var(--blue-bright);
             }
             
-            @media (max-width: 768px) {
+            @media (max-width: 991px) {
                 .nav-menu {
                     display: none;
                 }
-                
+
                 .menu-burger {
                     display: flex;
                     flex-direction: column;
                     cursor: pointer;
                     padding: 0.5rem;
+                    /* Бургер всегда выше оверлея (9999), чтобы «крестик» был виден и кликабелен */
+                    position: relative;
+                    z-index: 10000;
                 }
-                
+
                 .menu-burger span {
                     width: 25px;
                     height: 3px;
@@ -596,21 +495,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     margin: 3px 0;
                     transition: 0.3s;
                 }
-                
+
                 .menu-burger.active span:nth-child(1) {
                     transform: rotate(-45deg) translate(-5px, 6px);
                 }
-                
+
                 .menu-burger.active span:nth-child(2) {
                     opacity: 0;
                 }
-                
+
                 .menu-burger.active span:nth-child(3) {
                     transform: rotate(45deg) translate(-5px, -6px);
                 }
             }
-            
-            @media (min-width: 769px) {
+
+            @media (min-width: 992px) {
                 .menu-burger {
                     display: none;
                 }
